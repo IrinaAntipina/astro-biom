@@ -65,7 +65,7 @@ This project relies on data from the NASA Exoplanet Archive and the following pa
 
 ## Installation & Setup
 
-1. Clone the repository: git clone [https://github.com/your-username/astro-biom.git](https://github.com/your-username/astro-biom.git)
+1. Clone the repository
 2. Create a virtual environment (optional but recommended)
 3. Install dependencies: pip install -r requirements.txt
 4. Set up API Keys: Create a .env file in the root directory and add your Google Gemini API key: GOOGLE_API_KEY=your_api_key_here
