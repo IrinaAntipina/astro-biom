@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
+from pypdf import PdfReader
 
 
 load_dotenv()
@@ -16,10 +17,34 @@ if GOOGLE_API_KEY:
     except Exception as e:
         pass
 
-st.set_page_config(page_title="AstroBiom: Scientific Dashboard", page_icon="🪐", layout="wide")
+st.set_page_config(page_title="AstroBiom. Scientific Dashboard", page_icon="🪐", layout="wide")
 
 
 @st.cache_data
+
+def load_papers_text():
+    text_content = ""
+    pdf_files = [
+        "papers/adams_2025.pdf", 
+        "papers/kiang_2007.pdf", 
+        "papers/schulze_makuchl_2020.pdf"
+    ]
+    
+    for file_path in pdf_files:
+        if os.path.exists(file_path):
+            try:
+                reader = PdfReader(file_path)
+                text_content += f"\n\n--- START OF DOCUMENT: {file_path} ---\n"
+
+                for page in reader.pages:
+                    text_content += page.extract_text() + "\n"
+                text_content += f"\n--- END OF DOCUMENT: {file_path} ---\n"
+            except Exception as e:
+                st.error(f"Error reading {file_path}: {e}")
+    
+    return text_content
+
+
 def load_data():
     path_final = "data/astrobiom_final.csv"
     path_processed = "data/astrobiom_processed.csv"
@@ -67,27 +92,68 @@ if df is not None:
     
     if 'AstroBiom_Score' in df_filtered.columns and not df_filtered.empty:
         best_planet = df_filtered.sort_values(by='AstroBiom_Score', ascending=False).iloc[0]
-        st.sidebar.success(f"⭐ Sample Leader\n**{best_planet['pl_name']}**\n(Score: {best_planet['AstroBiom_Score']:.1f})")
+        st.sidebar.success(f"Sample Leader\n**{best_planet['pl_name']}**\n(Score: {best_planet['AstroBiom_Score']:.1f})")
 else:
     st.error("Data not loaded")
     st.stop()
 
 
-st.title("🪐 AstroBiom: Habitability Analysis")
+st.title("AstroBiom. Habitability analysis")
 st.markdown("Step-by-step exploration of exoplanets based on three scientific theories.")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab0, tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    "0. About",
     "1. Theory A. Biology (Schulze-Makuch)", 
     "2. Theory B. Atmosphere (Zahnle)", 
     "3. Theory C. Rotation Dynamics (Adams)", 
-    "4. ML",
-    "5. AI Astrobiologist"
+    "4. Connection with ML",
+    "5. AI Astrobiologist",
+    "6. AI with pappers"
 ])
+
+
+# PROJECT OVERVIEW
+
+with tab0:
+    st.header("Project Overview")
+    
+
+    st.markdown("""
+    ### The Goal
+    The main goal of AstroBiom is to move beyond simple metrics like the Earth Similarity Index (ESI). 
+    Instead of just looking at "radius and mass," this project evaluates habitability using a multi-factor approach that combines biology, atmospheric physics, and orbital dynamics.
+
+    ### Scientific Foundation
+    This dashboard integrates three modern independent theories:
+        
+    1.  **Biology & Thermodynamics.** Based on *Schulze-Makuch et al. (2020)*. 
+        Temperature limits for complex vs. microbial life.
+    2.  **Atmospheric Retention.** Based on Zahnle & Catling (2017) ("Cosmic Shoreline").
+        Can the planet hold onto its atmosphere against stellar radiation?
+    3.  **Climate Dynamics.** Based on Adams et al. (2025).
+        How rotation speed affects heat distribution and climate stability.
+
+    ### Innovation
+        
+    **Machine Learning (K-Means).**
+    I use unsupervised learning to cluster planets by physical parameters to see if "habitable" planets form a natural distinct group.
+        
+    **Generative AI.**
+    An AI agent acts as a virtual astrobiologist, interpreting complex data into human-readable scientific reports.      
+        
+    """)
+        
+
+    st.divider()
+    
+
+    st.caption("© 2025 AstroBiom by Irina Antipina. All rights reserved. | Data Source: NASA Exoplanet Archive")
+
 
 # THEORY A: BIOLOGY 
 with tab1:
     st.header("A. Temperature Limits of Life (Schulze-Makuch et al.)")
-    st.markdown("**Hypothesis:** Life depends on temperature conditions.")
+    st.markdown("**Hypothesis.** Life depends on temperature conditions.")
     
     if 'pl_eqt' in df_filtered.columns and 'insolation' in df_filtered.columns:
         df_plot = df_filtered.copy()
@@ -111,7 +177,7 @@ with tab1:
 # THEORY B: ATMOSPHERE
 with tab2:
     st.header("B. Cosmic Shoreline (Zahnle & Catling 2017)")
-    st.markdown("**Hypothesis:** Planets below the red line lose their atmosphere.")
+    st.markdown("**Hypothesis.** Planets below the red line lose their atmosphere.")
     
     if 'insolation' in df.columns and 'v_esc' in df.columns:
         fig_atm = px.scatter(
@@ -128,7 +194,7 @@ with tab2:
 # THEORY C: DYNAMICS
 with tab3:
     st.header("C. Rotation Dynamics (Adams et al. 2025)")
-    st.markdown("**Hypothesis:** Fast rotation (< 20 days) stabilizes the climate.")
+    st.markdown("**Hypothesis.** Fast rotation (< 20 days) stabilizes the climate.")
     
     if 'pl_orbper' in df_filtered.columns and 'pl_eqt' in df_filtered.columns:
         fig_adams = px.scatter(
@@ -144,12 +210,12 @@ with tab3:
 
 # ML 
 with tab4:
-    st.header("AI Validation of Scientific Theories")
+    st.header("AI validation of scientific theories")
     st.markdown("""
-    I used the **K-Means** algorithm to cluster planets based solely on their physical parameters 
+    I used the K-Means algorithm to cluster planets based solely on their physical parameters 
     (Mass, Radius, Density), without any knowledge of temperature or habitability.
     
-    **Hypothesis:** If our biological theories are correct, the AI should independently identify the "Habitable" group as the best one.
+    **Hypothesis.** If our biological theories are correct, the AI should independently identify the "Habitable" group as the best one.
     """)
     
     if 'AstroBiom_Score' in df_filtered.columns and 'Planet_Type_ML' in df_filtered.columns:
@@ -242,3 +308,59 @@ with tab5:
                     st.write(response.text)
                 except Exception as e:
                     st.error(f"Error: {e}")
+
+
+
+# CHAT WITH PAPERS 
+with tab6:
+    st.header("Interactive knowledge base")
+    st.markdown("Ask questions specifically about the scientific papers used in this project.")
+
+
+    knowledge_base = load_papers_text()
+    
+    if not knowledge_base:
+        st.warning("⚠️ PDF files not found")
+    else:
+
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
+
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+        if prompt := st.chat_input("Ex: What are the main biomarkers according to Kiang?"):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+
+            if not GOOGLE_API_KEY:
+                st.error("API Key not found")
+            else:
+                with st.chat_message("assistant"):
+                    with st.spinner("Analyzing scientific papers..."):
+                        try:
+
+                            full_prompt = f"""
+                            You are a research assistant for a diploma project.
+                            You have read the following academic papers:
+                            {knowledge_base}
+                            
+                            User Question: {prompt}
+                            
+                            Instructions:
+                            1. Answer ONLY using the provided text.
+                            2. Cite the specific paper (Adams, Kiang, or Schulze-Makuch) for each fact.
+                            3. If the answer is not in the papers, state that clearly.
+                            """
+                            
+                            model = genai.GenerativeModel('gemini-2.5-flash')
+                            response = model.generate_content(full_prompt)
+                            
+                            st.markdown(response.text)
+                            st.session_state.messages.append({"role": "assistant", "content": response.text})
+                            
+                        except Exception as e:
+                            st.error(f"Error: {e}")

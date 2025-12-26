@@ -9,3 +9,4 @@ requests
 plotly
 google-generativeai
 python-dotenv
+pypdf
