@@ -49,7 +49,7 @@ def run_clustering(df):
 
     df['Planet_Type_ML'] = df['cluster_id'].map(cluster_names)
     
-    print("\n🏷 Итоговые типы планет (определены ИИ):")
+   
     print(df['Planet_Type_ML'].value_counts())
     
     return df
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     OUTPUT_FILE = os.path.join(current_dir, "data", "astrobiom_final.csv")
     
     if os.path.exists(INPUT_FILE):
-        print(f"📂 Читаю файл: {INPUT_FILE}")
+   
         df = pd.read_csv(INPUT_FILE)
         
 
